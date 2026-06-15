@@ -1,8 +1,8 @@
-// create axios instance with baseURL
 import axios from "axios";
+import { ENV } from "../config/env";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000/api",
+  baseURL: ENV.API_URL,
   timeout: 10000,
   withCredentials: true, // Include cookies in requests
 });

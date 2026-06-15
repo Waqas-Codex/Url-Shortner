@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getUserUrls } from '../api/shortUrl.api'
-import StatCard from '../components/Dashboard/StatCard'
-import UrlRow from '../components/Dashboard/UrlRow'
-import EmptyState from '../components/Dashboard/EmptyState'
 import Toolbar from '../components/Dashboard/Toolbar'
 import UrlsList from '../components/Dashboard/UrlsList'
 import ListFooter from '../components/Dashboard/ListFooter'
 import { DashboardHeader, Stats } from '../components/Dashboard/DashboardHeader'
 import '../components/Dashboard/dashboard.css'
+import { ENV } from '../config/env'
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const DashboardPage = () => {
@@ -18,9 +16,7 @@ const DashboardPage = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [sortBy, setSortBy] = useState('newest') // newest | most-clicked
 
-  const baseUrl = window.location.origin.includes('5173')
-    ? 'http://localhost:3000'
-    : window.location.origin
+  const baseUrl = ENV.APP_URL || window.location.origin;
 
   const fetchUrls = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
