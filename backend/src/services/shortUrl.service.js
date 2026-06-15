@@ -1,4 +1,4 @@
-import { saveShortUrl, getShortUrl, getCustomShortUrl, getUrlsByUser } from "../dao/shortUrl.js";
+import { saveShortUrl, getShortUrl, getCustomShortUrl, getUrlsByUser , deleteUrlById } from "../dao/shortUrl.js";
 import { generateNanoId } from "../utils/helper.js";
 
 export const createShortUrlServiceWithoutUser = async (url, slug = null) => {
@@ -31,4 +31,10 @@ export const getShortUrlService = async (id) => {
 
 export const getUserUrlsService = async (userId) => {
   return await getUrlsByUser(userId);
+};
+
+
+// create servie for delete url
+export const deleteUrlService = async (id, userId) => {
+ return await deleteUrlById(id, userId);
 };

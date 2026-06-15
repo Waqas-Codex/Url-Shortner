@@ -9,62 +9,86 @@ import { ENV } from "./src/config/env.js";
 import connectDB from "./src/config/db.js";
 import short_url from "./src/routes/shortUrl.route.js";
 import authRoutes from "./src/routes/auth.routes.js";
-
 import { redirectFromShortUrl } from "./src/controllers/shortUrl.controller.js";
 import { attachUser } from "./src/utils/attachUser.js";
-import cookeParser from "cookie-parser";
+import cookieParser from "cookie-parser";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 const app = express();
-app.use(cookeParser());
 
-// ✅ Security Middlewares
-app.use(helmet({
-  crossOriginResourcePolicy: false, // Allows static assets like images to be served if needed
-}));
+// ✅ FIX 1: cookie parser typo fixed
+app.use(cookieParser());
 
+// ================= SECURITY =================
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
+
+// ================= RATE LIMIT =================
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // Limit each IP to 200 requests per `window`
-  message: "Too many requests from this IP, please try again later."
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: "Too many requests from this IP, please try again later.",
 });
+
 app.use("/api", limiter);
 
-// ✅ Middleware
-app.use(cors({
-  origin: ENV.FRONTEND_URL,
-  credentials: true,
-}));
+// ================= CORS =================
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://url-shortner-lime-pi.vercel.app",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(null, true); // dev-safe (important for ngrok)
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// ❌ FIX 2: REMOVE THIS (CRASH CAUSE)
+// app.options("*", cors());
+
+// ================= BODY =================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(attachUser)
 
-// Expose uploads publicly
+// ================= CUSTOM MIDDLEWARE =================
+app.use(attachUser);
+
+// ================= STATIC =================
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ Routes
+// ================= ROUTES =================
 app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
+  res.json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+  });
 });
 
-/**
- * @route   POST /api/create
- * @desc    Create a short URL
- */
-/**
- * @route   GET /api/auth
- * @desc    Auth route
- */
 app.use("/api/auth", authRoutes);
 app.use("/api", short_url);
 
-
-// redirect route
 app.get("/:id", redirectFromShortUrl);
 
-// ✅ Start server
-const PORT = ENV.PORT;
+// ================= SERVER =================
+const PORT = ENV.PORT || 3000;
 
 app.listen(PORT, async () => {
   await connectDB();

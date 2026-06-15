@@ -3,6 +3,7 @@ import {
   createShortUrlServiceWithUser,
   getShortUrlService,
   getUserUrlsService,
+  deleteUrlService
 } from "../services/shortUrl.service.js";
 
 export const createShortUrl = async (req, res) => {
@@ -60,5 +61,30 @@ export const getUserUrls = async (req, res) => {
     return res.json({ urls });
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+};
+
+
+// create delete url  controller
+
+export const deleteUrl = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedUrl = await deleteUrlService(id, req.user._id);
+
+    if (!deletedUrl) {
+      return res.status(404).json({
+        message: "URL not found or you don't have permission to delete it",
+      });
+    }
+
+    return res.json({
+      message: "URL deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 };

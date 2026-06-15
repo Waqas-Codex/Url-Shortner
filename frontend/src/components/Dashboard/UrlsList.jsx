@@ -2,10 +2,10 @@ import { LoadingSpinner, ErrorIcon } from './icons.jsx'
 import UrlRow from './UrlRow'
 import EmptyState from './EmptyState'
 
-const UrlsList = ({ loading, error, filtered, baseUrl, onRetry }) => {
+const UrlsList = ({ loading, error, filtered, baseUrl, onRetry, onDelete, deletingId }) => {
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-4">
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
         <LoadingSpinner />
         <p className="text-sm text-gray-400 dark:text-gray-500">Loading your links…</p>
       </div>
@@ -14,14 +14,14 @@ const UrlsList = ({ loading, error, filtered, baseUrl, onRetry }) => {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-4">
+        <div className="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center">
           <ErrorIcon />
         </div>
-        <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
         <button
           onClick={onRetry}
-          className="text-xs text-indigo-600 dark:text-indigo-400 underline hover:no-underline"
+          className="text-xs text-indigo-500 dark:text-indigo-400 underline hover:no-underline"
         >
           Try again
         </button>
@@ -34,9 +34,15 @@ const UrlsList = ({ loading, error, filtered, baseUrl, onRetry }) => {
   }
 
   return (
-    <div className="space-y-3">
-      {filtered.map((entry, i) => (
-        <UrlRow key={entry._id} entry={entry} index={i} baseUrl={baseUrl} />
+    <div className="divide-y divide-gray-100 dark:divide-gray-800">
+      {filtered.map((entry) => (
+        <UrlRow
+          key={entry._id}
+          entry={entry}
+          baseUrl={baseUrl}
+          onDelete={onDelete}
+          isDeleting={deletingId === entry._id}
+        />
       ))}
     </div>
   )

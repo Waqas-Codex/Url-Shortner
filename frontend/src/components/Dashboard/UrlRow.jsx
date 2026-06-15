@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ClickIcon, CopyIcon, CheckIcon, ExternalLinkIcon } from './icons.jsx'
+import { Copy, Check, ExternalLink, MousePointerClick, Trash2, RefreshCw } from 'lucide-react'
 
-const UrlRow = ({ entry, index, baseUrl }) => {
+const UrlRow = ({ entry, baseUrl, onDelete, isDeleting }) => {
   const [copied, setCopied] = useState(false)
   const shortLink = `${baseUrl}/${entry.short_url}`
 
@@ -11,74 +11,76 @@ const UrlRow = ({ entry, index, baseUrl }) => {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // derive a simple domain label for the original url
   let originDomain = entry.full_url
   try { originDomain = new URL(entry.full_url).hostname } catch {
-    // ignore error, use full URL as fallback
+      // in case of invalid URL, fallback to full URL
+      originDomain = entry.full_url
   }
 
-  // clicks bar – max out at 100 for visual purposes
-  const barWidth = Math.min((entry.clicks / Math.max(entry.clicks, 10)) * 100, 100)
-
   return (
-    <div
-      className="group relative flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-2xl border border-white/20 dark:border-white/10 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-xl transition-all duration-300"
-      style={{ animation: `fadeSlideUp 0.4s ease ${0.05 * index}s both` }}
-    >
-      {/* Index badge */}
-      <span className="hidden sm:flex w-7 h-7 shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold items-center justify-center">
-        {index + 1}
-      </span>
+    <div className="flex items-center gap-4 px-4 py-3.5
+                    hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors">
 
-      {/* URLs column */}
-      <div className="flex-1 min-w-0 space-y-1">
-        {/* Short URL */}
-        <div className="flex items-center gap-2">
+      {/* URLs */}
+      <div className="flex-1 min-w-0 space-y-0.5">
+        <div className="flex items-center gap-1.5">
           <a
+          
             href={shortLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+            className="text-sm font-medium text-indigo-500 dark:text-indigo-400
+                       hover:underline truncate"
           >
             {shortLink}
           </a>
-          <ExternalLinkIcon />
+          <ExternalLink className="w-3 h-3 text-gray-300 dark:text-gray-600 shrink-0" />
         </div>
-        {/* Original URL */}
         <p className="text-xs text-gray-400 dark:text-gray-500 truncate" title={entry.full_url}>
-          → {originDomain}
+          {originDomain}
         </p>
       </div>
 
       {/* Clicks */}
-      <div className="flex flex-col items-start sm:items-center gap-1 sm:min-w-25">
-        <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-200">
-          <ClickIcon />
-          <span className="text-lg font-bold">{entry.clicks.toLocaleString()}</span>
-        </div>
-        <div className="w-full h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden sm:w-24">
-          <div
-            className="h-full rounded-full bg-linear-to-r from-indigo-500 to-purple-500 transition-all duration-700"
-            style={{ width: `${barWidth}%` }}
-          />
-        </div>
-        <span className="text-xs text-gray-400">clicks</span>
+      <div className="hidden sm:flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 shrink-0">
+        <MousePointerClick className="w-3.5 h-3.5" />
+        <span className="font-medium text-gray-700 dark:text-gray-300">
+          {entry.clicks.toLocaleString()}
+        </span>
       </div>
 
-      {/* Copy button */}
-      <button
-        onClick={handleCopy}
-        id={`copy-btn-${index}`}
-        title="Copy short link"
-        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
-          copied
-            ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400'
-            : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50'
-        }`}
-      >
-        {copied ? <CheckIcon /> : <CopyIcon />}
-        {copied ? 'Copied!' : 'Copy'}
-      </button>
+      {/* Actions */}
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={handleCopy}
+          title="Copy short link"
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors
+            ${copied
+              ? 'bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400'
+              : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700'
+            }`}
+        >
+          {copied
+            ? <><Check className="w-3.5 h-3.5" /> Copied</>
+            : <><Copy className="w-3.5 h-3.5" /> Copy</>
+          }
+        </button>
+
+        <button
+          onClick={() => onDelete(entry._id)}
+          disabled={isDeleting}
+          title="Delete"
+          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500
+                     hover:bg-red-50 dark:hover:bg-red-950/40
+                     transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {isDeleting
+            ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            : <Trash2 className="w-3.5 h-3.5" />
+          }
+        </button>
+      </div>
+
     </div>
   )
 }

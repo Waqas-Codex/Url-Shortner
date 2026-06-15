@@ -1,22 +1,22 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getUserUrls } from '../api/shortUrl.api'
+import { RefreshCw } from 'lucide-react'
+import { getUserUrls, deleteUrl } from '../api/shortUrl.api'
 import Toolbar from '../components/Dashboard/Toolbar'
 import UrlsList from '../components/Dashboard/UrlsList'
 import ListFooter from '../components/Dashboard/ListFooter'
-import { DashboardHeader, Stats } from '../components/Dashboard/DashboardHeader'
-import '../components/Dashboard/dashboard.css'
+import { Stats } from '../components/Dashboard/DashboardHeader'
 import { ENV } from '../config/env'
 
-// ─── Main Dashboard ───────────────────────────────────────────────────────────
 const DashboardPage = () => {
   const [urls, setUrls] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [refreshing, setRefreshing] = useState(false)
-  const [sortBy, setSortBy] = useState('newest') // newest | most-clicked
+  const [sortBy, setSortBy] = useState('newest')
+  const [deletingId, setDeletingId] = useState(null) // track which one is deleting
 
-  const baseUrl = ENV.APP_URL || window.location.origin;
+  const baseUrl = ENV.APP_URL || window.location.origin
 
   const fetchUrls = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
@@ -24,14 +24,8 @@ const DashboardPage = () => {
     setError(null)
     try {
       const data = await getUserUrls()
-      console.log('✅ API Response:', data)
       setUrls(data.urls || [])
     } catch (err) {
-      console.error('❌ API Error:', {
-        status: err?.response?.status,
-        message: err?.response?.data?.message,
-        fullError: err
-      })
       setError(err?.response?.data?.message || 'Failed to load your URLs')
     } finally {
       setLoading(false)
@@ -41,6 +35,20 @@ const DashboardPage = () => {
 
   useEffect(() => { fetchUrls() }, [fetchUrls])
 
+  // ── Delete handler ─────────────────────────────────────────────────────────
+  const handleDelete = useCallback(async (id) => {
+    setDeletingId(id)
+    try {
+      await deleteUrl(id)
+      setUrls(prev => prev.filter(u => u._id !== id)) // optimistic remove
+    } catch (err) {
+      console.error('Delete failed:', err)
+      // optionally show a toast here
+    } finally {
+      setDeletingId(null)
+    }
+  }, [])
+
   const totalClicks = urls.reduce((sum, u) => sum + (u.clicks || 0), 0)
 
   const filtered = urls
@@ -48,58 +56,65 @@ const DashboardPage = () => {
       u.short_url.toLowerCase().includes(search.toLowerCase()) ||
       u.full_url.toLowerCase().includes(search.toLowerCase())
     )
-    .sort((a, b) => {
-      if (sortBy === 'most-clicked') return b.clicks - a.clicks
-      return 0 // default: server order (already newest first via sort({ _id: -1 }))
-    })
+    .sort((a, b) => sortBy === 'most-clicked' ? b.clicks - a.clicks : 0)
 
   return (
-    <>
-      <div className=" max-w-5xl mx-auto px-4  py-28 space-y-8">
-        {/* ── Header ─────────────────────────────── */}
-        <DashboardHeader 
-          onRefresh={() => fetchUrls(true)}
-          refreshing={refreshing}
-        />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="max-w-5xl mx-auto px-4 pt-24 pb-16 space-y-6">
 
-        {/* ── Stat Cards ─────────────────────────── */}
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              Manage and track your shortened links
+            </p>
+          </div>
+          <button
+            onClick={() => fetchUrls(true)}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-medium
+                       text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900
+                       border border-gray-200 dark:border-gray-800 rounded-lg
+                       hover:border-gray-300 dark:hover:border-gray-700
+                       transition disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+
+        {/* Stats */}
         <Stats urls={urls} totalClicks={totalClicks} />
 
-        {/* ── Table Section ──────────────────────── */}
-        <div
-          className="rounded-2xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md shadow-xl overflow-hidden"
-          style={{ animation: 'fadeSlideUp 0.5s ease 0.25s both' }}
-        >
-          {/* Toolbar */}
-          <Toolbar 
-            search={search} 
+        {/* Table card */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+          <Toolbar
+            search={search}
             onSearchChange={setSearch}
             sortBy={sortBy}
             onSortChange={setSortBy}
           />
-
-          {/* Content */}
-          <div className="p-5">
-            <UrlsList 
-              loading={loading} 
-              error={error} 
-              filtered={filtered}
-              urls={urls}
-              baseUrl={baseUrl}
-              onRetry={() => fetchUrls()}
-            />
-          </div>
-
-          {/* Footer */}
-          <ListFooter 
-            loading={loading} 
-            error={error} 
+          <UrlsList
+            loading={loading}
+            error={error}
+            filtered={filtered}
+            urls={urls}
+            baseUrl={baseUrl}
+            onRetry={() => fetchUrls()}
+            onDelete={handleDelete}      // ← pass down
+            deletingId={deletingId}      // ← so row knows it's being deleted
+          />
+          <ListFooter
+            loading={loading}
+            error={error}
             filtered={filtered}
             urls={urls}
           />
         </div>
+
       </div>
-    </>
+    </div>
   )
 }
 

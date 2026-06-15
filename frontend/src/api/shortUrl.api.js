@@ -10,3 +10,10 @@ export const getUserUrls = async () => {
   const { data } = await axiosInstance.get("/urls");
   return data;
 };
+
+
+// shortUrl.api.js
+export const deleteUrl = async (id) => {
+  const res = await axiosInstance.delete(`/url/${id}`)
+  return res.data
+}

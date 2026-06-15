@@ -31,3 +31,10 @@ export const getCustomShortUrl = async (slug) => {
 export const getUrlsByUser = async (userId) => {
   return await urlSchema.find({ user: userId }).sort({ _id: -1 });
 };
+
+export const deleteUrlById = async (id, userId) => {
+  return await urlSchema.findOneAndDelete({
+    _id: id,
+    user: userId,
+  });
+};
