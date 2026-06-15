@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: false, unique: true, sparse: true },
   password: { type: String, required: true , select: false },
   avatar: { type: String, required: false,
-    default: "https://i.pravatar.cc/3235",
+    default: "https://res.cloudinary.com/dmkcml2mw/image/upload/v1781523342/DtE-u4iU8AANEdN_yphxo7.jpg",
   },
 });
 
