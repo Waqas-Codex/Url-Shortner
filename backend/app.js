@@ -64,7 +64,6 @@ app.use(
   })
 );
 
-// ❌ FIX 2: REMOVE THIS (CRASH CAUSE)
 // app.options("*", cors());
 
 // ================= BODY =================

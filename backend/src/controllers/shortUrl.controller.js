@@ -4,7 +4,7 @@ import {
   getUserUrlsService,
   deleteUrlService
 } from "../services/shortUrl.service.js";
-import { isBot } from "../utils/botDetector.js"; // naya file banao niche
+import { isBot } from "../utils/botDetector.js"; 
 
 
 export const createShortUrl = async (req, res) => {
@@ -89,7 +89,6 @@ export const getUserUrls = async (req, res) => {
 };
 
 
-// create delete url  controller
 
 export const deleteUrl = async (req, res) => {
   try {

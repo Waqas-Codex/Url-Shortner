@@ -1,4 +1,3 @@
-// src/utils/botDetector.js
 const BOT_PATTERNS = [
   "facebookexternalhit", "Facebot", "Twitterbot", "WhatsApp",
   "LinkedInBot", "TelegramBot", "Slackbot", "Discordbot"
