@@ -11,12 +11,15 @@ import short_url from "./src/routes/shortUrl.route.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import { redirectFromShortUrl } from "./src/controllers/shortUrl.controller.js";
 import { attachUser } from "./src/utils/attachUser.js";
+import qrRoute from "./src/routes/qr.route.js"
 import cookieParser from "cookie-parser";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+app.set("trust proxy", 1); // Fixes express-rate-limit X-Forwarded-For warning behind proxies like Vercel/Heroku
 
 // ✅ FIX 1: cookie parser typo fixed
 app.use(cookieParser());
@@ -86,6 +89,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api", short_url);
 
 app.get("/:id", redirectFromShortUrl);
+app.use("/api/qr", qrRoute);
 
 // ================= SERVER =================
 const PORT = ENV.PORT || 3000;

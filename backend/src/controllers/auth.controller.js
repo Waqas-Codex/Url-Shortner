@@ -1,6 +1,5 @@
 import { cookiesOptions } from "../config/config.js";
-import { userRegister, userLogin } from "../services/auth.service.js";
-import User from "../models/user.model.js";
+import { userRegister, userLogin, updateUserProfile } from "../services/auth.service.js";
 
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
@@ -40,40 +39,30 @@ export const getCurrentUser = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { name , username} = req.body;
-    const user = await User.findById(req.user._id);
+    const updateData = {};
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (name) {
-      user.name = name;
-    }
-
-    if (username) {
-      user.username = username;
-    }
+    if (name) updateData.name = name;
+    if (username) updateData.username = username;
 
     if (req.file) {
-      // Create a full URL to the avatar
       const baseUrl = `${req.protocol}://${req.get('host')}`;
-      user.avatar = `${baseUrl}/uploads/profiles/${req.file.filename}`;
+      updateData.avatar = `${baseUrl}/uploads/profiles/${req.file.filename}`;
     }
 
-    await user.save();
+    const updatedUser = await updateUserProfile(req.user._id, updateData);
 
     res.status(200).json({
       message: "Profile updated successfully",
       user: {
-        _id: user._id,
-        name: user.name,
-        username: user.username,
-        email: user.email,
-        avatar: user.avatar
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        avatar: updatedUser.avatar
       }
     });
   } catch (err) {
     console.error("Profile update error:", err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(err.message === "User not found" ? 404 : 500).json({ message: err.message || "Internal server error" });
   }
 };

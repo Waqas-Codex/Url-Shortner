@@ -1,118 +1,160 @@
-function UrlForm({ url, setUrl, loading, handleSubmit, isAuthenticated, customSlug, setCustomSlug }) {
+import { useState } from "react";
+import { QrCode, Copy, Check, Download, RefreshCw } from "lucide-react";
+import { getQrCode } from "../api/shortUrl.api.js"; // 🔥 Import for background safety
+
+function UrlForm({
+  url,
+  setUrl,
+  loading,
+  handleSubmit,
+  isAuthenticated,
+  customSlug,
+  setCustomSlug
+}) {
+  const [qr, setQr] = useState("");
+  const [shortUrl, setShortUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [qrLoading, setQrLoading] = useState(false);
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setShortUrl("");
+    setQr("");
+
+    try {
+      // Parent component (Home) ka function execute hoga jo API hit karega
+      const data = await handleSubmit(e);
+
+      // Backend response data check format
+      const finalShortUrl = data?.shortUrl || data?.data?.shortUrl;
+      const finalQr = data?.qr || data?.data?.qr;
+
+      if (finalShortUrl) {
+        setShortUrl(finalShortUrl);
+      }
+
+      if (finalQr) {
+        setQr(finalQr);
+      } else if (finalShortUrl) {
+        // 🔥 Fallback: Agar response me qr na aaye, toh short URL se slug nikal kar getQrCode chalayein
+        setQrLoading(true);
+        const parts = finalShortUrl.split("/");
+        const slug = parts[parts.length - 1];
+        try {
+          const qrRes = await getQrCode(slug);
+          if (qrRes?.qr) setQr(qrRes.qr);
+        } catch (err) {
+          console.log("QR Fetching inside form failed:", err);
+        } finally {
+          setQrLoading(false);
+        }
+      }
+
+    } catch (err) {
+      console.log("Error inside Form Submit wrapper:", err);
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(shortUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
 
       {/* URL Input */}
       <div className="space-y-1.5">
-        <label htmlFor="url" className="block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+        <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
           Paste your long URL
         </label>
-        <div className="relative group">
-          {/* Link icon */}
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none transition-colors group-focus-within:text-indigo-500">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-          </div>
-          <input
-            id="url"
-            type="url"
-            placeholder="https://very-long-domain.com/path/to/page?query=value"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            required
-            className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm
-                       bg-gray-50 dark:bg-gray-800/80
-                       border-2 border-gray-200 dark:border-gray-700
-                       text-gray-800 dark:text-gray-100
-                       placeholder-gray-400 dark:placeholder-gray-600
-                       transition-all duration-200
-                       focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500
-                       focus:ring-4 focus:ring-indigo-500/10
-                       hover:border-indigo-300 dark:hover:border-indigo-700"
-          />
-        </div>
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          required
+          className="w-full px-4 py-3 rounded-2xl text-sm
+                     bg-gray-50 dark:bg-gray-800/80
+                     border border-gray-300 dark:border-gray-700
+                     text-gray-900 dark:text-white focus:outline-none"
+        />
       </div>
 
-      {/* Custom Slug — only for authenticated users */}
+      {/* Custom Slug */}
       {isAuthenticated && (
-        <div className="space-y-1.5">
-          <label htmlFor="customSlug" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-            Custom Slug
-            <span className="normal-case px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-500 dark:text-indigo-400 text-[10px] font-bold tracking-normal">
-              Optional
-            </span>
-          </label>
-          <div className="relative group">
-            {/* Hash icon */}
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none transition-colors group-focus-within:text-indigo-500">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-              </svg>
-            </div>
-            <input
-              id="customSlug"
-              type="text"
-              placeholder="e.g., my-awesome-link"
-              value={customSlug || ""}
-              onChange={(e) => setCustomSlug(e.target.value)}
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm
-                         bg-gray-50 dark:bg-gray-800/80
-                         border-2 border-gray-200 dark:border-gray-700
-                         text-gray-800 dark:text-gray-100
-                         placeholder-gray-400 dark:placeholder-gray-600
-                         transition-all duration-200
-                         focus:outline-none focus:border-purple-500 dark:focus:border-purple-500
-                         focus:ring-4 focus:ring-purple-500/10
-                         hover:border-purple-300 dark:hover:border-purple-700"
-            />
+        <input
+          type="text"
+          value={customSlug || ""}
+          onChange={(e) => setCustomSlug(e.target.value)}
+          placeholder="custom slug (optional)"
+          className="w-full px-4 py-3 rounded-2xl text-sm
+                     bg-gray-50 dark:bg-gray-800/80
+                     border border-gray-300 dark:border-gray-700
+                     text-gray-900 dark:text-white focus:outline-none"
+        />
+      )}
+
+      {/* Submit Button */}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full py-3 rounded-2xl text-white bg-indigo-500
+                   hover:bg-indigo-600 transition font-medium disabled:opacity-50"
+      >
+        {loading ? "Shortening..." : "Shorten Link"}
+      </button>
+
+      {/* RESULT SECTION */}
+      {shortUrl && (
+        <div className="mt-4 space-y-4 p-4 rounded-xl bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+          
+          <div className="flex items-center justify-between gap-2">
+            <a
+              href={shortUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-500 text-sm break-all hover:underline font-medium"
+            >
+              {shortUrl}
+            </a>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg shrink-0 transition-colors"
+            >
+              {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-gray-500" />}
+            </button>
+          </div>
+
+          {/* QR Container code render */}
+          <div className="flex flex-col items-center justify-center pt-3 border-t border-gray-200 dark:border-gray-800">
+            {qrLoading ? (
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <RefreshCw className="w-4 h-4 animate-spin text-indigo-500" />
+                Loading QR code...
+              </div>
+            ) : qr ? (
+              <div className="flex flex-col items-center gap-3">
+                <img
+                  src={qr}
+                  alt="QR Code"
+                  className="w-36 h-36 rounded-lg bg-white p-2 border shadow-sm"
+                />
+                <a
+                  href={qr}
+                  download="qrcode.png"
+                  className="inline-flex items-center gap-1 text-xs text-indigo-500 hover:underline font-medium"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download QR Code
+                </a>
+              </div>
+            ) : null}
           </div>
         </div>
       )}
-
-      {/* Submit button */}
-      <button
-        type="submit"
-        id="shorten-url-btn"
-        disabled={loading}
-        className="relative w-full py-3.5 rounded-2xl font-bold text-sm text-white
-                   bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
-                   shadow-lg shadow-indigo-500/30
-                   transition-all duration-200
-                   hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40
-                   active:scale-[0.98]
-                   disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none
-                   overflow-hidden"
-      >
-        {/* Shimmer overlay */}
-        {!loading && (
-          <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/10 to-white/0
-                           -translate-x-full hover:translate-x-full transition-transform duration-700" />
-        )}
-
-        <span className="relative flex items-center justify-center gap-2">
-          {loading ? (
-            <>
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Shortening…
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                  d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Shorten Link
-            </>
-          )}
-        </span>
-      </button>
     </form>
   );
 }

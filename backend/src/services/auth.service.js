@@ -1,6 +1,6 @@
 import jsonwebtoken from  "jsonwebtoken"
 import User from "../models/user.model.js"
-import { createUser, findUserByEmail } from "../dao/user.dao.js"
+import { createUser, findUserByEmail, findUserById, updateUserById } from "../dao/user.dao.js"
 import { signToken } from "../utils/helper.js"
 
 export const userRegister = async (name, email , password)=>{
@@ -28,3 +28,11 @@ export const userLogin = async (email, password) => {
     const token =  signToken({id: user._id})
     return {token, user}
 }
+
+export const updateUserProfile = async (userId, updateData) => {
+    const user = await findUserById(userId);
+    if (!user) {
+        throw new Error("User not found");
+    }
+    return await updateUserById(userId, updateData);
+};

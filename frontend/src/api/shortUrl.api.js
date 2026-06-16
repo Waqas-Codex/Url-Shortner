@@ -17,3 +17,9 @@ export const deleteUrl = async (id) => {
   const res = await axiosInstance.delete(`/url/${id}`)
   return res.data
 }
+
+// Qr code api
+export const getQrCode = async (slug) => {
+  const res = await axiosInstance.get(`/qr/${slug}`);
+  return res.data;
+};
