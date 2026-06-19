@@ -23,3 +23,4 @@ export const getQrCode = async (slug) => {
   const res = await axiosInstance.get(`/qr/${slug}`);
   return res.data;
 };
+

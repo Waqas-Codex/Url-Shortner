@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Auth from './pages/Auth'
 import Dashboard from './pages/DashboardPage'
 import Profile from './pages/Profile'
+import UrlsPage from './pages/UrlsPage'
 import { checkAuth } from './utils/helper'
 
 // Root route
@@ -39,8 +40,15 @@ const profileRoute = new Route({
   beforeLoad: checkAuth
 });
 
+const urlsRoute = new Route({
+  getParentRoute: () => rootRoute,
+  path: '/urls',
+  component: UrlsPage,
+  beforeLoad: checkAuth
+});
+
 // Create route tree
-const routeTree = rootRoute.addChildren([homeRoute, authRoute, dashboardRoute, profileRoute])
+const routeTree = rootRoute.addChildren([homeRoute, authRoute, dashboardRoute, profileRoute, urlsRoute])
 
 // Create and export router
 export const router = createRouter({ routeTree })

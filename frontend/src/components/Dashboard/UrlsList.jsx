@@ -37,11 +37,11 @@ const UrlsList = ({ loading, error, filtered, baseUrl, onRetry, onDelete, deleti
     <div className="divide-y divide-gray-100 dark:divide-gray-800">
       {filtered.map((entry) => (
         <UrlRow
-          key={entry._id}
+          key={entry.id}
           entry={entry}
           baseUrl={baseUrl}
           onDelete={onDelete}
-          isDeleting={deletingId === entry._id}
+          isDeleting={deletingId === entry.id}
         />
       ))}
     </div>

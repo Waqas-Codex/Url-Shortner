@@ -2,31 +2,45 @@ import { cookiesOptions } from "../config/config.js";
 import { userRegister, userLogin, updateUserProfile } from "../services/auth.service.js";
 
 export const register = async (req, res) => {
-  const { name, email, password } = req.body;
-  const { token, user } = await userRegister(name, email, password);
-  req.user = user
+  try {
+    const { name, email, password } = req.body;
 
-  res.cookie("accessToken", token, cookiesOptions);
+    const { token, user } = await userRegister(name, email, password);
 
-  res.status(201).json({
-    message: "User registered successfully",
-    user: { name, email },
-  });
+    res.cookie("accessToken", token, cookiesOptions);
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      user,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 export const login = async (req, res) => {
-  const { email, password } = req.body;
-  const { token, user } = await userLogin(email, password);
-  req.user = user
+  try {
+    const { email, password } = req.body;
 
-  res.cookie("accessToken", token, cookiesOptions);
+    const { token, user } = await userLogin(email, password);
 
+    res.cookie("accessToken", token, cookiesOptions);
 
-
-  res.status(200).json({
-    message: "User logged in successfully",
-    user: user,
-  });
+    res.status(200).json({
+      success: true,
+      message: "User logged in successfully",
+      user,
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 
@@ -49,12 +63,12 @@ export const updateProfile = async (req, res) => {
       updateData.avatar = `${baseUrl}/uploads/profiles/${req.file.filename}`;
     }
 
-    const updatedUser = await updateUserProfile(req.user._id, updateData);
+    const updatedUser = await updateUserProfile(req.user.id, updateData);
 
     res.status(200).json({
       message: "Profile updated successfully",
       user: {
-        _id: updatedUser._id,
+        id: updatedUser.id,
         name: updatedUser.name,
         username: updatedUser.username,
         email: updatedUser.email,

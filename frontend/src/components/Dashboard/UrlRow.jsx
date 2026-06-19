@@ -107,7 +107,7 @@ const UrlRow = ({ entry, baseUrl, onDelete, isDeleting }) => {
           </button>
 
           <button
-            onClick={() => onDelete(entry._id)}
+            onClick={() => onDelete(entry.id)}
             disabled={isDeleting}
             title="Delete"
             className="p-1.5 rounded-lg text-gray-400 hover:text-red-500

@@ -4,7 +4,9 @@ import {
   getUserUrlsService,
   deleteUrlService
 } from "../services/shortUrl.service.js";
+import prisma from "../config/prisma.js";
 import { isBot } from "../utils/botDetector.js"; 
+import { UAParser } from "ua-parser-js";
 
 
 export const createShortUrl = async (req, res) => {
@@ -12,7 +14,7 @@ export const createShortUrl = async (req, res) => {
     const data = req.body;
     const shortUrl = await createShortUrlService(
       data.url,
-      req.user ? req.user._id : null,
+      req.user ? req.user.id : null,
       data.customSlug
     );
     return res.json({
@@ -28,11 +30,8 @@ export const createShortUrl = async (req, res) => {
 export const redirectFromShortUrl = async (req, res) => {
   const { id } = req.params;
 
-  const data = await getShortUrlService(id);
-
-  if (!data) {
-    return res.status(404).send("URL not found");
-  }
+  const data = await prisma.shortUrl.findUnique({ where: { short_url: id } });
+  if (!data) return res.status(404).send("URL not found");
 
   const userAgent = req.headers["user-agent"] || "";
 
@@ -55,6 +54,25 @@ export const redirectFromShortUrl = async (req, res) => {
     `);
   }
 
+  const parser = new UAParser(userAgent);
+  const device = parser.getDevice().type || "desktop";
+
+  prisma.click.create({
+    data: {
+      urlId: data.id,
+      device,
+      browser: parser.getBrowser().name,
+      referrer: req.headers["referer"] || "direct",
+      ip: req.ip,
+      country: req.headers["cf-ipcountry"] || "unknown",
+    },
+  }).catch(err => console.error("Click log failed:", err));
+
+  await prisma.shortUrl.update({
+    where: { id: data.id },
+    data: { clicks: { increment: 1 } },
+  });
+
   return res.redirect(data.full_url);
 };
 
@@ -67,7 +85,7 @@ export const createCustomShortUrl = async (req, res) => {
 
   const shortUrl = await createShortUrlService(
     url, 
-    req.user ? req.user._id : null, 
+    req.user ? req.user.id : null, 
     slug
   );
 
@@ -81,7 +99,7 @@ export const getUserUrls = async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const urls = await getUserUrlsService(req.user._id);
+    const urls = await getUserUrlsService(req.user.id);
     return res.json({ urls });
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -94,7 +112,7 @@ export const deleteUrl = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deletedUrl = await deleteUrlService(id, req.user._id);
+    const deletedUrl = await deleteUrlService(id, req.user.id);
 
     if (!deletedUrl) {
       return res.status(404).json({

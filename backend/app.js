@@ -12,7 +12,9 @@ import authRoutes from "./src/routes/auth.routes.js";
 import { redirectFromShortUrl } from "./src/controllers/shortUrl.controller.js";
 import { attachUser } from "./src/utils/attachUser.js";
 import qrRoute from "./src/routes/qr.route.js"
+import analyticsRoute from "./src/routes/analytics.route.js";
 import cookieParser from "cookie-parser";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -86,7 +88,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api", short_url);
-
+app.use("/api/analytics", analyticsRoute);
 app.get("/:id", redirectFromShortUrl);
 app.use("/api/qr", qrRoute);
 

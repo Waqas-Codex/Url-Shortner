@@ -1,5 +1,5 @@
+import bcrypt from "bcrypt";
 import jsonwebtoken from  "jsonwebtoken"
-import User from "../models/user.model.js"
 import { createUser, findUserByEmail, findUserById, updateUserById } from "../dao/user.dao.js"
 import { signToken } from "../utils/helper.js"
 
@@ -14,18 +14,19 @@ export const userRegister = async (name, email , password)=>{
         email,
         password
     })
-    const token = signToken({id: newUser._id})
+    const token = signToken({id: newUser.id})
     return {token, user: newUser}
 
 }
 
 export const userLogin = async (email, password) => {
     const user = await findUserByEmail(email)
-    if(!user || !(await user.comparePassword(password))){
+    if(!user || !(await bcrypt.compare(password, user.password))){
         throw new Error("Invalid credentials")
+        
     }
     
-    const token =  signToken({id: user._id})
+    const token =  signToken({id: user.id})
     return {token, user}
 }
 
