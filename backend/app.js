@@ -79,7 +79,7 @@ app.use(attachUser);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ================= ROUTES =================
-app.get("/api/health", (req, res) => {
+app.get("/health", (req, res) => {
   res.json({
     status: "OK",
     timestamp: new Date().toISOString(),
@@ -93,9 +93,9 @@ app.get("/:id", redirectFromShortUrl);
 app.use("/api/qr", qrRoute);
 
 // ================= SERVER =================
-const PORT = ENV.PORT || 3000;
+const PORT = ENV.PORT;
 
 app.listen(PORT, async () => {
   await connectDB();
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port `);
 });
