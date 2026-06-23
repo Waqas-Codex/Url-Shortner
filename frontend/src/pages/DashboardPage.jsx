@@ -25,7 +25,7 @@ const DashboardPage = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [range, setRange] = useState('7d')
 
-  const baseUrl = ENV.APP_URL || window.location.origin
+  const baseUrl = (ENV.APP_URL || window.location.origin).replace(/\/+$/, '');
 
   const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)

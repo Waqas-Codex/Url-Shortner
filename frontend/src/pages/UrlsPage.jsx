@@ -15,7 +15,7 @@ const UrlsPage = () => {
   const [sortBy, setSortBy] = useState('newest')
   const [deletingId, setDeletingId] = useState(null)
 
-  const baseUrl = ENV.APP_URL || window.location.origin
+  const baseUrl = (ENV.APP_URL || window.location.origin).replace(/\/+$/, '');
 
   const fetchUrls = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
