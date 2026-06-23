@@ -1,7 +1,10 @@
 import axiosInstance from "../utils/axiosInstance.js";
 
 export const createShortUrl = async (url, customSlug = "") => {
-  const payload = { url, customSlug };
+  const payload = { url };
+  if (customSlug && customSlug.trim() !== "") {
+    payload.customSlug = customSlug;
+  }
   const { data } = await axiosInstance.post("/create", payload);
   return data;
 };
