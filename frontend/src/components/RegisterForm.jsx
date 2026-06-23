@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { registerUser } from "../api/user.api.js";
 import { useNavigate } from "@tanstack/react-router";
+import { useDispatch } from "react-redux";
+import { login } from "../store/slices/authSlice.js";
 
 export default function RegisterForm({state}) {
   const [name, setName] = useState("");
@@ -9,7 +11,8 @@ export default function RegisterForm({state}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const Navigate = useNavigate()
+  const Navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,6 +24,7 @@ export default function RegisterForm({state}) {
       // NOTE: User.api allows only password and email right now, 
       // but typically you'd also send 'name'.z
       const data = await registerUser(password, email , name);
+      dispatch(login(data.user));
       Navigate({to: '/dashboard'});
       setSuccess("Account created successfully!");
       // TODO: Redirect or update global state here
